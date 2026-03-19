@@ -1,0 +1,11 @@
+.git
+.gitignore
+.deploy.env
+.deploy.env.local
+node_modules
+server/node_modules
+data
+server/data
+*.log
+.DS_Store
+coverage

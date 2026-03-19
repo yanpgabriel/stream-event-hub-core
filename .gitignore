@@ -1,0 +1,10 @@
+node_modules/
+server/node_modules/
+data/
+server/data/
+.DS_Store
+*.log
+.env
+.deploy.env
+.deploy.env.local
+coverage/

@@ -1,0 +1,30 @@
+{
+  "name": "stream-event-hub-core",
+  "version": "1.0.0",
+  "description": "Backend engine for aggregating Twitch, YouTube, and LivePix stream events.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npm --prefix server run lint",
+    "test": "npm --prefix server test",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/viktorkav/stream-event-hub-core.git"
+  },
+  "lint-staged": {
+    "server/**/*.js": "cd server && npm run lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/viktorkav/stream-event-hub-core/issues"
+  },
+  "homepage": "https://github.com/viktorkav/stream-event-hub-core#readme",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
+}
