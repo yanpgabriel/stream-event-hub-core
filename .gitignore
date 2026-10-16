@@ -8,3 +8,6 @@ server/data/
 .deploy.env
 .deploy.env.local
 coverage/
+web/dist/
+test-results/
+playwright-report/

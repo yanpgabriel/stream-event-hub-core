@@ -1,19 +1,30 @@
 {
   "name": "stream-event-hub-core",
   "version": "1.0.0",
+  "private": true,
+  "packageManager": "bun@1.4.2",
+  "workspaces": ["server", "web"],
   "description": "Backend engine for aggregating Twitch, YouTube, and LivePix stream events.",
   "main": "index.js",
   "scripts": {
-    "lint": "npm --prefix server run lint",
-    "test": "npm --prefix server test",
-    "prepare": "husky"
+    "dev": "bun scripts/dev.ts",
+    "dev:web": "bun run --cwd web dev",
+    "dev:server": "bun scripts/server.ts --watch",
+    "build": "bun run --cwd web build",
+    "typecheck": "bun run --cwd web typecheck",
+    "lint": "bun run --cwd server lint && bun run typecheck",
+    "test": "bun run test:server && bun run test:web",
+    "test:server": "bun scripts/test-server.ts",
+    "test:web": "bun test web/test",
+    "start": "bun scripts/server.ts",
+    "prepare": "bun --bun husky"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/viktorkav/stream-event-hub-core.git"
   },
   "lint-staged": {
-    "server/**/*.js": "cd server && npm run lint"
+    "server/**/*.js": "bun run --cwd server lint"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +36,10 @@
   "homepage": "https://github.com/viktorkav/stream-event-hub-core#readme",
   "devDependencies": {
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0"
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.6.2"
+  },
+  "optionalDependencies": {
+    "node-win-x64": "22.23.3"
   }
 }

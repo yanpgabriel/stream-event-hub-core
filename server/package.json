@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch-path=. --watch-path=src index.js",
-    "lint": "eslint index.js src test",
+    "start:bun": "bun index.js",
+    "dev:bun": "bun --watch index.js",
+    "lint": "bun --bun eslint index.js src test",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
@@ -17,6 +19,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.21.0",
     "multer": "^2.0.2",
+    "obs-websocket-js": "^5.0.8",
     "socket.io": "^4.7.2",
     "tmi.js": "^1.8.5",
     "ws": "^8.18.3",
