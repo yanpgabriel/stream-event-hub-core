@@ -10,7 +10,7 @@ router.post('/auth/twitch/device', requireAdmin, requireCsrf, async (req, res) =
         return res.status(400).json({ error: 'Save Client ID first' });
     }
     try {
-        const scopes = 'user:read:email moderator:read:followers channel:read:subscriptions bits:read channel:read:redemptions chat:read';
+        const scopes = 'user:read:email moderator:read:followers channel:read:subscriptions bits:read channel:read:redemptions chat:read moderator:manage:chat_messages moderator:manage:banned_users';
         const response = await axios.post(
             'https://id.twitch.tv/oauth2/device',
             `client_id=${config.twitchClientId}&scopes=${encodeURIComponent(scopes)}`,

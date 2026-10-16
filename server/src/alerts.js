@@ -290,7 +290,7 @@ function resolveEventPlatform(listener, eventData, opts = {}) {
 
 function findLatestAlertEntryByType(type) {
     return alertHistory.find((entry) => {
-        if (!entry || entry.type !== type) return false;
+        if (!entry || entry.type !== type || entry.replay || entry.origin === 'test') return false;
         const name = String(entry?.event?.name || '').trim();
         return !!name;
     }) || null;
@@ -354,17 +354,14 @@ function emitAlert(listener, eventData, opts = {}) {
         payloadEventData.platform = platform;
     }
 
-    if (!ignoreToggles && target === 'production' && key && config.alertToggles[key] === false) {
-        console.log(`[ALERT] ${listener} suppressed (toggled off)`);
-        return;
-    }
+    const suppressed = !ignoreToggles && target === 'production' && key && config.alertToggles[key] === false;
 
     if (target === 'production' && recordHistory) {
         let shouldSaveConfig = false;
-        if (!replay && key === 'follow' && payloadEventData.name) {
+        if (!replay && opts.origin !== 'test' && key === 'follow' && payloadEventData.name) {
             config.lastFollower = payloadEventData.name;
             shouldSaveConfig = true;
-        } else if (!replay && key === 'sub' && payloadEventData.name) {
+        } else if (!replay && opts.origin !== 'test' && key === 'sub' && payloadEventData.name) {
             config.lastSub = payloadEventData.name;
             shouldSaveConfig = true;
         }
@@ -383,6 +380,8 @@ function emitAlert(listener, eventData, opts = {}) {
                 : (listener.startsWith('follower') || listener.startsWith('subscriber') || listener.startsWith('raid') || listener.startsWith('cheer') || listener.startsWith('tip') ? 'stream' : 'manual'),
             platform: replay ? 'replay' : platform,
             replay,
+            origin: opts.origin || (replay ? 'replay' : 'provider'),
+            suppressed: !!suppressed,
             event: payloadEventData
         };
         appendAlertHistory(historyEntry);
@@ -396,7 +395,10 @@ function emitAlert(listener, eventData, opts = {}) {
         if (!replay && (key === 'follow' || key === 'sub')) {
             ctx.io.emit('widget-update', getLatestWidgetData());
         }
+        require('./services/overlay').emitState();
     }
+
+    if (suppressed) return;
 
     // Keep alerts visually unobstructed by featured chat overlays.
     ensureAlertVisualPriority(target);

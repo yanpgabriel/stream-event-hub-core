@@ -368,6 +368,23 @@ function getChatState(options = {}) {
     };
 }
 
+function removeChatMessages({ action, id, source, userId, chatname }) {
+    const ids = [];
+    for (let i = recentMessages.length - 1; i >= 0; i--) {
+        const message = recentMessages[i];
+        if (message.source !== source) continue;
+        const matches = action === 'delete'
+            ? message.id === id
+            : (userId ? message.userId === userId : message.chatname.toLowerCase() === String(chatname || '').toLowerCase());
+        if (!matches) continue;
+        ids.push(message.id);
+        recentMessages.splice(i, 1);
+    }
+    if (featuredMessage && ids.includes(featuredMessage.id)) clearFeaturedChatMessage();
+    if (ids.length) emitSocketEvent('chat-removed', { ids });
+    return ids;
+}
+
 function seedSocketWithChatState(socket, options = {}) {
     if (!socket || typeof socket.emit !== 'function') return;
     pruneExpiredMessages();
@@ -386,5 +403,6 @@ module.exports = {
     getChatOptions,
     emitChatOptions,
     getChatState,
-    seedSocketWithChatState
+    seedSocketWithChatState,
+    removeChatMessages
 };

@@ -4,7 +4,17 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const router = require('express').Router();
-const { SOUNDS_DIR } = require('../config');
+const { SOUNDS_DIR, config } = require('../config');
+
+function resolveSound(filename) {
+    if (!filename || filename !== path.basename(filename) || filename.includes('\\') || filename === '.' || filename === '..') return null;
+    const resolved = path.resolve(SOUNDS_DIR, filename);
+    return path.dirname(resolved) === path.resolve(SOUNDS_DIR) ? resolved : null;
+}
+
+function isSoundInUse(filename) {
+    return Object.values(config.alertSounds || {}).some((sound) => sound?.url === `/sounds/${filename}`);
+}
 
 const soundUpload = multer({
     storage: multer.diskStorage({
@@ -17,7 +27,7 @@ const soundUpload = multer({
     }),
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('audio/')) cb(null, true);
+        if (file.mimetype.startsWith('audio/') && /\.(mp3|wav|ogg|oga|m4a|aac|flac|webm|opus|aiff?|wma)$/i.test(file.originalname)) cb(null, true);
         else cb(new Error('Only audio files allowed'));
     }
 });
@@ -44,7 +54,9 @@ router.get('/api/sounds', (req, res) => {
 });
 
 router.delete('/api/sounds/:filename', (req, res) => {
-    const filePath = path.join(SOUNDS_DIR, req.params.filename);
+    const filePath = resolveSound(req.params.filename);
+    if (!filePath) return res.status(400).json({ error: 'Invalid filename' });
+    if (isSoundInUse(req.params.filename)) return res.status(409).json({ error: 'Unlink this sound from alerts before deleting it' });
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
     try {
         fs.unlinkSync(filePath);
@@ -56,12 +68,15 @@ router.delete('/api/sounds/:filename', (req, res) => {
 });
 
 router.patch('/api/sounds/:filename', (req, res) => {
-    const oldPath = path.join(SOUNDS_DIR, req.params.filename);
+    const oldPath = resolveSound(req.params.filename);
+    if (!oldPath) return res.status(400).json({ error: 'Invalid filename' });
+    if (isSoundInUse(req.params.filename)) return res.status(409).json({ error: 'Unlink this sound from alerts before renaming it' });
     const newName = req.body.newName;
-    if (!newName) return res.status(400).json({ error: 'newName required' });
+    if (typeof newName !== 'string' || !newName.trim() || newName.length > 150) return res.status(400).json({ error: 'A filename of 1–150 characters is required' });
     const ext = path.extname(req.params.filename);
     const safeName = newName.replace(/[^a-zA-Z0-9_\-.]/g, '_') + ext;
     const newPath = path.join(SOUNDS_DIR, safeName);
+    if (newPath !== oldPath && fs.existsSync(newPath)) return res.status(409).json({ error: 'A sound with this name already exists' });
     if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'Not found' });
     try {
         fs.renameSync(oldPath, newPath);

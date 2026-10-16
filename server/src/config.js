@@ -5,7 +5,7 @@ const fs = require('fs');
 const axios = require('axios');
 const ctx = require('./ctx');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = path.resolve(process.env.STREAM_HUB_DATA_DIR || path.join(__dirname, '..', 'data'));
 const SOUNDS_DIR = path.join(DATA_DIR, 'sounds');
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const SECRETS_PATH = path.join(DATA_DIR, 'secrets.json');
@@ -18,14 +18,15 @@ const SECRET_FIELDS = [
     'twitchAccessToken',
     'twitchRefreshToken',
     'livePixClientSecret',
-    'livePixAccessToken'
+    'livePixAccessToken',
+    'obsPassword'
 ];
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(SOUNDS_DIR)) fs.mkdirSync(SOUNDS_DIR, { recursive: true });
 if (!fs.existsSync(ALERT_HISTORY_PATH)) fs.writeFileSync(ALERT_HISTORY_PATH, '');
 
-const CONFIG_VERSION = 10;
+const CONFIG_VERSION = 11;
 const MAX_HISTORY = 2000;
 const MAX_QUEUE_ITEMS = 500;
 const CHAT_TEXT_MIN_PT = 8;
@@ -36,6 +37,7 @@ const DEFAULT_CLICKABLE_CHAT_MESSAGE_TEXT_SIZE = 12;
 const DEFAULT_FEATURE_MESSAGE_TEXT_SIZE = 48;
 const DEFAULT_ALERT_MESSAGE_TEXT_SIZE = 32;
 const RESTART_FREE_FIELDS = new Set([
+    'obsPassword',
     'featureChatAutoHideSeconds',
     'chatMessageTextSize',
     'clickableChatMessageTextSize',
@@ -61,6 +63,7 @@ function normalizeTextSizePt(value, fallback) {
 }
 
 const DEFAULT_CONFIG = {
+    obsPassword: '',
     version: CONFIG_VERSION,
     lastSavedAt: null,
     youtubeChannelId: process.env.YOUTUBE_CHANNEL_ID || '',
@@ -260,6 +263,7 @@ function redactConfig(cfg) {
         twitchRefreshToken: '',
         livePixClientSecret: '',
         livePixAccessToken: '',
+        obsPassword: '',
         hasSecrets: {
             googleClientSecret: !!cfg.googleClientSecret,
             youtubeAccessToken: !!cfg.youtubeAccessToken,
@@ -268,7 +272,8 @@ function redactConfig(cfg) {
             twitchAccessToken: !!cfg.twitchAccessToken,
             twitchRefreshToken: !!cfg.twitchRefreshToken,
             livePixClientSecret: !!cfg.livePixClientSecret,
-            livePixAccessToken: !!cfg.livePixAccessToken
+            livePixAccessToken: !!cfg.livePixAccessToken,
+            obsPassword: !!cfg.obsPassword
         }
     };
 }
@@ -364,6 +369,7 @@ function validateConfigPatch(input) {
     const errors = [];
     const patch = {};
     const allowedTop = new Set([
+        'obsPassword',
         'youtubeChannelId',
         'youtubeLiveId',
         'googleClientId',
@@ -518,7 +524,7 @@ function validateConfigPatch(input) {
         else patch.livePixClientId = input.livePixClientId.trim();
     }
 
-    for (const secretField of ['googleClientSecret', 'youtubeAccessToken', 'youtubeRefreshToken', 'twitchClientSecret', 'twitchAccessToken', 'twitchRefreshToken', 'livePixClientSecret', 'livePixAccessToken']) {
+    for (const secretField of SECRET_FIELDS) {
         if (secretField in input) {
             if (typeof input[secretField] !== 'string') {
                 errors.push({ field: secretField, message: 'Must be string' });

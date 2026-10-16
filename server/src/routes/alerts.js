@@ -80,7 +80,7 @@ router.post('/api/test-alert', (req, res) => {
 
     for (let i = 0; i < duplicateCount; i++) {
         setTimeout(() => {
-            alerts.emitAlert(listener, payload, { target });
+            alerts.emitAlert(listener, payload, { target, origin: 'test' });
         }, i * cooldownMs);
     }
 
@@ -97,7 +97,7 @@ router.post('/test-trigger', requireAdmin, requireCsrf, (req, res) => {
         amount: body.amount,
         message: body.message,
         tier: body.tier
-    }, { target: 'production' });
+    }, { target: 'production', origin: 'test' });
     res.json({ success: true });
 });
 

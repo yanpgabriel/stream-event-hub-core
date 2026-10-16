@@ -11,12 +11,6 @@ const {
     ADMIN_TRUST_LOCAL_NETWORK,
 } = require('../security');
 
-router.get('/admin', (req, res) => {
-    const session = getSession(req);
-    if (!session) return res.redirect('/');
-    return res.redirect('/');
-});
-
 router.post('/api/auth/login', (req, res) => {
     if (isTrustedLocalRequest(req)) {
         return res.json({
@@ -64,7 +58,7 @@ router.get('/api/auth/me', (req, res) => {
 
 // Admin API protection middleware
 router.use('/api', (req, res, next) => {
-    const publicGets = new Set(['/widget-data', '/tts/fallback']);
+    const publicGets = new Set(['/widget-data', '/tts/fallback', '/health/ready', '/overlay/state']);
     const publicPosts = new Set(['/auth/login']);
     if (req.method === 'GET' && publicGets.has(req.path)) return next();
     if (req.method === 'POST' && publicPosts.has(req.path)) return next();

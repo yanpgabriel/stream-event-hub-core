@@ -11,7 +11,8 @@ const {
     featureChatMessage,
     featureChatMessageById,
     clearFeaturedChatMessage,
-    seedSocketWithChatState
+    seedSocketWithChatState,
+    removeChatMessages
 } = require('./services/chat');
 const { moderateTwitchChat } = require('./services/twitch');
 const { moderateYouTubeChat } = require('./services/youtube');
@@ -126,6 +127,8 @@ function registerChatControlHandlers(socket) {
                 throw new Error('Unsupported source: ' + source);
             }
 
+            removeChatMessages({ action, id, source, userId, chatname });
+
             if (typeof ack === 'function') {
                 ack({ ok: true });
             }
@@ -197,6 +200,7 @@ function setupSocket(io) {
 
     io.on('connection', (socket) => {
         socket.emit('connected', connectedPayload());
+        socket.emit('overlay:state', require('./services/overlay').getStore().snapshot());
         seedSocketWithChatState(socket, { limit: 320 });
         registerChatControlHandlers(socket);
 

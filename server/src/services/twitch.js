@@ -638,23 +638,27 @@ async function restartTwitchListener(options = {}) {
 }
 
 async function moderateTwitchChat({ action, chatname, id }) {
-    if (!twitchChatClient) throw new Error("Twitch chat client not connected via OAuth");
+    if (!twitchApiClient || !config.twitchAccessToken) throw new Error('Twitch moderation requires an OAuth connection');
     const channelName = normalizeTwitchChannelName(config.twitchChatChannel);
-    if (!channelName) throw new Error("No twitch channel configured");
-    
-    if (!chatname && action !== 'delete') throw new Error("Missing chatname for moderation");
-    if (!id && action === 'delete') throw new Error("Missing message ID for deletion");
-
-    if (action === 'delete') {
-        await twitchChatClient.deletemessage(channelName, id);
-    } else if (action === 'timeout') {
-         // Default timeout 600s
-         await twitchChatClient.timeout(channelName, chatname, 600, "Timeout from Stream Event Hub Core");
-    } else if (action === 'ban') {
-         await twitchChatClient.ban(channelName, chatname, "Banned from Stream Event Hub Core");
-    } else {
-        throw new Error("Unknown action: " + action);
-    }
+    if (!['delete', 'timeout', 'ban'].includes(action)) throw new Error('Unknown moderation action');
+    if (!chatname && action !== 'delete') throw new Error('Missing chatname for moderation');
+    if (!id && action === 'delete') throw new Error('Missing message ID for deletion');
+    const moderator = await twitchApiClient.users.getAuthenticatedUser(config.twitchAccessToken);
+    const broadcaster = channelName ? await twitchApiClient.users.getUserByName(channelName) : moderator;
+    if (!moderator || !broadcaster) throw new Error('Could not resolve the Twitch channel or moderator');
+    const target = action === 'delete' ? null : await twitchApiClient.users.getUserByName(chatname);
+    if (action !== 'delete' && !target) throw new Error('Twitch user not found');
+    await twitchApiClient.asUser(moderator.id, async (api) => {
+        if (action === 'delete') {
+            await api.moderation.deleteChatMessages(broadcaster.id, id);
+        } else {
+            await api.moderation.banUser(broadcaster.id, {
+                user: target.id,
+                reason: 'Moderated from Stream Hub',
+                ...(action === 'timeout' ? { duration: 600 } : {})
+            });
+        }
+    });
     return true;
 }
 

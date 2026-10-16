@@ -43,29 +43,10 @@ async function bootstrap() {
     const { setupSocket } = require('./socket');
     setupSocket(io);
 
-    app.use(express.json());
+    app.use(express.json({limit:'512kb'}));
     app.use(express.urlencoded({ extended: true }));
 
     app.use('/sounds', express.static(configModule.SOUNDS_DIR));
-
-    app.get('/', (_req, res) => {
-        res.type('text/plain').send([
-            'Stream Event Hub Core',
-            '',
-            'Public server-only edition.',
-            'Overlay layouts, scene pages, admin UI, and branded assets were intentionally removed.',
-            '',
-            'Useful endpoints:',
-            '- GET /api/health/ready',
-            '- GET /api/status',
-            '- GET /api/audience',
-            '- GET /api/config',
-            '- GET /api/chat/state',
-            '- GET /api/alert-history',
-            '- GET /api/session/summary',
-            '- GET /api/analytics/overview'
-        ].join('\n'));
-    });
 
     app.use(require('./routes/auth'));
     app.use(require('./routes/config'));
@@ -80,6 +61,16 @@ async function bootstrap() {
     app.use(require('./routes/livepix'));
     app.use(require('./routes/widget'));
     app.use(require('./routes/sorteios'));
+    app.use(require('./routes/overlay'));
+    app.use(require('./routes/obs'));
+    require('./frontend').mountFrontend(app);
+
+    // Upload/JSON failures must retain an API error contract for the UI.
+    app.use((err, req, res, next) => {
+        if (!req.path.startsWith('/api/')) return next(err);
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : (err.status || 400);
+        return res.status(status).json({ error: err.message || 'Request failed' });
+    });
 
     const {
         restartTwitchListener,
@@ -131,6 +122,7 @@ async function bootstrap() {
         console.log(`[Runtime] Shutdown requested (${signal})`);
         try {
             await listenerManager.shutdown();
+            await require('./services/obs').getObs().shutdown();
         } catch (err) {
             console.error('[Runtime] Listener shutdown failed:', err?.message || String(err));
         }
@@ -161,6 +153,7 @@ async function bootstrap() {
     });
 
     await restartListeners();
+    await require('./services/obs').getObs().start();
     await new Promise((resolve) => {
         server.listen(PORT, () => {
             ctx.serverReady = true;

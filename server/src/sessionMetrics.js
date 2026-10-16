@@ -668,6 +668,7 @@ function applyDonationCounter(counter, donation) {
 
 function buildAnalyticsEventFromHistoryEntry(entry) {
     if (!entry || typeof entry !== 'object') return null;
+    if (entry.origin === 'test') return null;
     if (isReplayHistoryEntry(entry)) return null;
 
     const platform = inferPlatform(entry);
@@ -811,6 +812,7 @@ function emitSummaryUpdate() {
         const nsp = ctx.io.of('/admin');
         if (!nsp) return;
         nsp.emit('session-summary-update', getCurrentSessionSummary());
+        require('./services/overlay').emitState();
     } catch (err) {
         console.error('[SessionMetrics] Failed to emit summary update:', err?.message || String(err));
     }
