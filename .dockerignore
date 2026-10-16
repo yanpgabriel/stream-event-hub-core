@@ -9,3 +9,8 @@ server/data
 *.log
 .DS_Store
 coverage
+web/node_modules
+web/dist
+test-results
+playwright-report
+docs

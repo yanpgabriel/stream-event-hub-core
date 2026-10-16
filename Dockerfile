@@ -1,14 +1,30 @@
-FROM node:20-alpine
-
+FROM oven/bun:1.4.2-alpine AS dependencies
 WORKDIR /app
+COPY package.json bun.lock ./
+COPY server/package.json ./server/package.json
+COPY web/package.json ./web/package.json
+RUN bun install --frozen-lockfile --ignore-scripts
+
+FROM dependencies AS frontend
+COPY web/ ./web/
+COPY shared/ ./shared/
+RUN bun run --cwd web build
+
+FROM oven/bun:1.4.2-alpine AS production-dependencies
+WORKDIR /app
+COPY package.json bun.lock ./
+COPY server/package.json ./server/package.json
+COPY web/package.json ./web/package.json
+RUN bun install --frozen-lockfile --production --ignore-scripts
+
+FROM node:22-alpine
+WORKDIR /app/server
 ENV NODE_ENV=production
-
-COPY server/package.json ./
-COPY server/package-lock.json ./
-
-RUN npm ci --omit=dev && npm cache clean --force
-
-COPY server/ .
+ENV STREAM_HUB_DATA_DIR=/app/data
+COPY --from=production-dependencies /app/node_modules /app/node_modules
+COPY server/ /app/server/
+COPY shared/ /app/shared/
+COPY --from=frontend /app/web/dist /app/web/dist
 
 EXPOSE 3232
 
