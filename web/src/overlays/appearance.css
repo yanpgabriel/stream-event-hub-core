@@ -1,0 +1,109 @@
+.overlay-page.overlay-styled {
+  flex-direction: column;
+  padding: var(--overlay-margin);
+  color: var(--overlay-text);
+}
+.overlay-styled .alert-box,
+.overlay-styled .widget-box,
+.overlay-styled .chat-bubble {
+  min-width: 0;
+  max-width: min(100%, var(--overlay-width));
+  flex-shrink: 0;
+  background: var(--overlay-background);
+  border: var(--overlay-border) solid var(--overlay-accent);
+  border-radius: var(--overlay-radius);
+  padding: var(--overlay-padding);
+  color: var(--overlay-text);
+  text-align: inherit;
+  box-shadow: var(--overlay-shadow);
+  animation: var(--overlay-animation);
+  overflow-wrap: anywhere;
+}
+.overlay-styled .chat-bubble {
+  width: 100%;
+  border-width: 0 0 0 var(--overlay-border);
+}
+.overlay-page.overlay-styled .alert-box,
+.overlay-page.overlay-styled .widget-box {
+  max-height: min(100%, var(--overlay-height));
+  overflow: hidden;
+}
+.overlay-styled .overlay-chat-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: inherit;
+  width: 100%;
+  max-width: min(100%, var(--overlay-width));
+  max-height: min(100%, var(--overlay-height));
+  min-height: 0;
+  overflow: hidden;
+}
+.overlay-styled .widget-box {
+  flex-wrap: wrap;
+}
+.overlay-styled .widget-box > div {
+  min-width: 0;
+}
+.overlay-styled .alert-box h1,
+.overlay-styled .widget-box strong,
+.overlay-styled .chat-bubble strong {
+  font-family: inherit;
+  font-size: var(--overlay-title);
+  color: var(--overlay-accent);
+}
+.overlay-styled .alert-box p,
+.overlay-styled .chat-bubble p {
+  color: var(--overlay-text);
+}
+.overlay-styled .alert-box .eyebrow,
+.overlay-styled .widget-box small {
+  color: var(--overlay-accent);
+}
+.overlay-styled .widget-box small {
+  font-size: var(--overlay-body, 10px);
+}
+.overlay-styled .alert-box strong {
+  color: var(--overlay-accent);
+  font-size: var(--overlay-body, 25px);
+}
+.overlay-page.overlay-styled.overlay-in-preview {
+  padding: min(var(--overlay-margin), 12px);
+}
+.overlay-styled.overlay-in-preview .alert-box,
+.overlay-styled.overlay-in-preview .widget-box,
+.overlay-styled.overlay-in-preview .chat-bubble {
+  padding: min(var(--overlay-padding), 18px);
+  width: auto;
+}
+.overlay-styled.overlay-in-preview .chat-bubble {
+  width: 100%;
+}
+.overlay-styled.overlay-in-preview .alert-box h1,
+.overlay-styled.overlay-in-preview .widget-box strong,
+.overlay-styled.overlay-in-preview .chat-bubble strong {
+  font-size: min(var(--overlay-title), 32px);
+}
+.overlay-styled.overlay-in-preview .alert-box p {
+  font-size: min(var(--overlay-body, 24px), 24px) !important;
+}
+.overlay-styled.overlay-in-preview .chat-bubble p {
+  font-size: min(var(--overlay-body, 18px), 18px) !important;
+}
+@keyframes overlay-slide {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay-styled .alert-box,
+  .overlay-styled .widget-box,
+  .overlay-styled .chat-bubble {
+    animation: none !important;
+  }
+}
